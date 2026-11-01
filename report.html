@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HW2 Report: Neon Highway</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 10.5pt; line-height: 1.42; color: #111; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 12.5pt; margin: 14px 0 3px; }
+  p { margin: 3px 0; }
+  .meta { color: #333; margin-bottom: 8px; }
+  .fa { direction: rtl; text-align: right; font-family: "Geeza Pro", "Vazirmatn", Tahoma, sans-serif; }
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  figure { margin: 0; break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid #ccc; display: block; }
+  figcaption { font-size: 9pt; color: #444; margin-top: 2px; }
+  code { font-family: Menlo, monospace; font-size: 9.5pt; }
+</style>
+</head>
+<body>
+<h1>HW2 Report: Neon Highway</h1>
+<p class="meta">Kian Yari, 401522223<br>Git repository: see <code>repo_link.txt</code></p>
+
+<h2>Sources and collaboration</h2>
+<p class="fa">برای دیباگینگ، یادگیری مطالب لازم برای انجام تمرین، ویرایش متون و تمیزی کد از کمک هوش مصنوعی استفاده کردم. همه تکسچرها و صداها با کد تولید شده‌اند و از منبع بیرونی استفاده نشده است.</p>
+
+<h2>How it works</h2>
+<p><b>Road.</b> <code>RoadGenerator</code> keeps segments (<code>RoadSegment</code>, 24 m) up to 260 m in front of the car. The road moves back under the car, and a segment that has passed behind the camera goes back to the pool and is placed again at the far end. Each time a segment is reused its buildings get a new size and position. The road has 3 lanes. A/D or the arrow keys move the car between them.</p>
+<p><b>Input.</b> Only the new Input System is used. <code>CarControls.inputactions</code> has a <code>Gameplay</code> map (MoveLeft, MoveRight, Pause, Confirm) and a <code>UI</code> map (Point, Click, Navigate, Submit...) which is wired to the <code>InputSystemUIInputModule</code> for the menu buttons.</p>
+<p><b>Classes.</b> <code>Interactable</code> is abstract and has the abstract <code>OnPlayerContact</code> and virtual <code>Update</code>, <code>Init</code>, <code>ApproachSpeed</code>. <code>Obstacle</code> and <code>Collectible</code> extend it. Obstacles: <code>StaticCar</code> (stopped van or truck with blinking hazard lights) and <code>MovingCar</code> (drives the same way, slower, overrides <code>ApproachSpeed</code>). Collectibles: <code>Coin</code> and <code>FuelCan</code> (override <code>Collect</code>). <code>GameManager</code> is a singleton and holds the states Menu, Playing, Paused and GameOver.</p>
+<p><b>Lives.</b> The car has 3 lives shown as hearts. A hit removes one life, the car flashes red and blinks for 1.8 s (no second hit in that time), the camera shakes, there are sparks and smoke, a red flash on the screen and a crash sound. At 0 lives the car explodes and the game is over.</p>
+<p><b>Fuel.</b> Fuel goes down with time (a bit faster at high speed) and is shown as a bar that turns red and blinks "LOW FUEL" under 25%. Each fuel can gives +35. The spawner puts one can about every 280 m. Empty tank means game over.</p>
+<p><b>Difficulty.</b> Every 300 m the level goes up. Each level makes the world faster (22 m/s, +2.5 per level, max 56) and the rows of obstacles closer, and makes double rows and moving cars more likely. A row never blocks all 3 lanes, and moving cars stay in one lane at a time, so there is always a way through.</p>
+<p><b>Object pooling.</b> <code>PoolManager</code> keeps one stack of inactive objects per prefab. Road segments, cars, coins, fuel cans, fireworks and all particle effects are taken from it and returned to it. <code>Instantiate</code> and <code>Destroy</code> are not used while playing (pools are pre-filled at start).</p>
+<p><b>Night look.</b> Night skybox with stars and a purple glow at the horizon, dark blue fog, a weak moon light, street lights (point lights) every 12 m, and city buildings with lit windows. The car has two headlight spot lights and a neon underglow (an emissive strip and a point light) whose intensity grows with the speed and pulses. The URP renderer uses Forward+ so there can be many lights. The post processing volume has Bloom, ACES tonemapping, color adjustments, vignette and a bit of chromatic aberration.</p>
+<p><b>Fireworks and particles.</b> <code>FireworksManager</code> shoots a random coloured burst (sparks with trails and glitter) in the sky every 0.6 to 2.2 s. Particle systems are also used for the exhaust smoke and flame, collision sparks, the explosion and the pick-up sparkle. Bloom makes them glow.</p>
+<p><b>Sound.</b> Looping music, an engine loop whose pitch follows the speed, and sounds for crash, coin, fuel, low fuel, fireworks, level up, game over and buttons.</p>
+<p><b>UI.</b> Main menu (start, quit), pause menu (resume, restart, main menu), game over screen (score, best score, restart, main menu), and a HUD with speed, fuel bar, lives, score, best score, coins and level.</p>
+<p><b>Saving.</b> The best score is stored with <code>PlayerPrefs</code> when the game ends and when the application quits.</p>
+<p><b>Testing.</b> A small helper (<code>AutoDriver</code>, only active with an environment variable) drove the built game: an AI played 110 s to level 12 with no errors at about 800 fps, and fake keyboard and mouse events through the Input System confirmed that the keys and every menu button work.</p>
+
+<h2>Screenshots</h2>
+<div class="shots">
+  <figure><img src="Screenshots/1_main_menu.jpg"><figcaption>Main menu</figcaption></figure>
+  <figure><img src="Screenshots/2_gameplay.jpg"><figcaption>Gameplay: HUD, neon road, street lights</figcaption></figure>
+  <figure><img src="Screenshots/3_fireworks.jpg"><figcaption>Fireworks over the city</figcaption></figure>
+  <figure><img src="Screenshots/4_pause.jpg"><figcaption>Pause menu</figcaption></figure>
+  <figure><img src="Screenshots/5_hit.jpg"><figcaption>Hit feedback: red flash, sparks, one life lost</figcaption></figure>
+  <figure><img src="Screenshots/6_game_over.jpg"><figcaption>Game over with new record</figcaption></figure>
+</div>
+</body>
+</html>
